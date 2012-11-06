@@ -1,0 +1,81 @@
+'*****************************************************************************
+'       Copyright (c) 2012, Guangdong HYLT Co.,Ltd.
+'       All rights reserved.
+'
+' $Workfile: ViewBusLine.MB $
+' $Revision: 0.1 $
+' $Author: Lee $
+' $Date: 2012/10/25 $
+'
+' 工具描述:
+'
+'     将号百公交数据按指定的线路ID，显示线路和对应的站点
+'
+' 历史版本:
+'
+'    Rev 0.1  2012/10/25
+'             实现表查询和地图显示功能
+'             实现对地图信息进行标注显示的功能
+'
+'*****************************************************************************
+
+Include "mapbasic.def"
+Include "icons.def"
+
+Declare Sub Main
+Declare Sub Test
+
+
+'创建按钮的主函数
+Sub Main
+    '增加合并公交的按键
+    Create ButtonPad "公交" As
+        PushButton
+            Calling Test
+            HelpMsg "ToolInfo\n工具信息"
+            Icon MI_ICON_MISC_4
+        Show
+
+End Sub
+
+
+'测试函数
+Sub Test
+    Dim linkid As String
+
+
+ GoTo ComeOn     '添加错误捕获
+
+
+    '表Selection不存在时退出
+NoSelect:
+    Exit Sub
+
+
+ComeOn:
+    '捕获没有选中点位的异常
+    OnError GoTo NoSelect
+
+
+    Dialog
+        Title "输入线路GUID"
+        Control EditText
+            Into linkid
+        Control OKButton
+    If CommandInfo(CMD_INFO_DLG_OK) Then
+        '查询该线路
+        Select * From pt_link Where GUID=linkid Into SelectionL
+        '通过关联表查询线路关联的站点
+        Select * from Pt_stop, Pt_relation_stop where Pt_stop.GUID = Pt_relation_stop.GUID and Pt_relation_stop.LineGUID = linkid into SelectionP
+        
+        '打开图形显示，并添加相关地图数据
+        Map From SelectionP,Pt_stop,SelectionL
+
+        '对站点进行名称和顺序的标注
+        set map redraw off
+        Set Map Layer 1 Label With Name+OrderNum Auto On
+        set map redraw on
+
+    End If
+
+End Sub
